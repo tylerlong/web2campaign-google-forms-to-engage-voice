@@ -1,5 +1,7 @@
 import RingCentral from '@rc-ex/core';
 import EngageVoiceExtension from '@rc-ex/engage-voice';
+import fs from 'fs';
+import papaparse from 'papaparse';
 
 const rc = new RingCentral({
   clientId: process.env.ENGAGE_VOICE_CLIENT_ID!,
@@ -19,8 +21,14 @@ const rc = new RingCentral({
   await rc.installExtension(engageVoiceExtension);
   await engageVoiceExtension.authorize();
 
-  const r = await engageVoiceExtension.get('/voice/api/v1/admin/accounts');
-  console.log(r.data);
+  const csvString = fs.readFileSync(
+    process.env.GOOGLE_FORMS_CSV_FILE!,
+    'utf-8'
+  );
+  const rows = papaparse.parse(csvString).data;
+  console.log(rows);
+  // const r = await engageVoiceExtension.get('/voice/api/v1/admin/accounts');
+  // console.log(r.data);
 
   await rc.revoke();
 })();

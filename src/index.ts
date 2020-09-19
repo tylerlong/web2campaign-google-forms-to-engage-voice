@@ -11,6 +11,9 @@ const rc = new RingCentral({
   clientSecret: process.env.ENGAGE_VOICE_CLIENT_SECRET!,
   server: process.env.ENGAGE_VOICE_RC_SERVER_URL!,
 });
+const engageVoiceExtension = new EngageVoiceExtension({
+  server: process.env.ENGAGE_VOICE_SERVER_URL,
+});
 
 const findCampaignByName = async (
   engageVoiceExtension: EngageVoiceExtension,
@@ -41,9 +44,7 @@ const findCampaignByName = async (
     extension: process.env.ENGAGE_VOICE_EXTENSION!,
     password: process.env.ENGAGE_VOICE_PASSWORD!,
   });
-  const engageVoiceExtension = new EngageVoiceExtension({
-    server: process.env.ENGAGE_VOICE_SERVER_URL,
-  });
+
   await rc.installExtension(engageVoiceExtension);
   await engageVoiceExtension.authorize();
 
@@ -52,22 +53,22 @@ const findCampaignByName = async (
     process.env.ENGAGE_VOICE_CAMPAIGN_NAME!
   );
 
-  // await engageVoiceExtension.post(
-  //   `/voice/api/v1/admin/accounts/${account.accountId}/campaigns/${campaign.campaignId}/leadLoader/direct`,
-  //   {
-  //     description: 'Prospect customers',
-  //     dialPriority: 'IMMEDIATE',
-  //     duplicateHandling: 'REMOVE_FROM_LIST',
-  //     listState: 'ACTIVE',
-  //     timeZoneOption: 'NOT_APPLICABLE',
-  //     uploadLeads: rows.map((row: any) => ({
-  //       leadPhone: row['Phone number'],
-  //       externId: row['Email'],
-  //       firstName: row['Name'].split(/\s+/)[0],
-  //       lastName: row['Name'].split(/\s+/)[1],
-  //     })),
-  //   }
-  // );
+  await engageVoiceExtension.post(
+    `/voice/api/v1/admin/accounts/${account.accountId}/campaigns/${campaign.campaignId}/leadLoader/direct`,
+    {
+      description: process.env.ENGAGE_VOICE_LIST_DESCRIPTION,
+      dialPriority: 'IMMEDIATE',
+      duplicateHandling: 'REMOVE_FROM_LIST',
+      listState: 'ACTIVE',
+      timeZoneOption: 'NOT_APPLICABLE',
+      uploadLeads: rows.map((row: any) => ({
+        leadPhone: row['Phone'],
+        externId: row['Email'],
+        firstName: row['First Name'],
+        lastName: row['Last Name'],
+      })),
+    }
+  );
 
   let r = await engageVoiceExtension.get(
     `/voice/api/v1/admin/accounts/${account.accountId}/dialGroups/${dialGroup.dialGroupId}/campaigns/${campaign.campaignId}/lists`
@@ -78,7 +79,7 @@ const findCampaignByName = async (
   if (list) {
     r = await engageVoiceExtension.post(
       `/voice/api/v1/admin/accounts/${account.accountId}/campaignLeads/leadSearch`,
-      {listId: list.listId}
+      {listIds: [list.listId]}
     );
     console.log(r.data);
   }

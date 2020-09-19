@@ -51,11 +51,6 @@ const findCampaignByName = async (
     engageVoiceExtension,
     process.env.ENGAGE_VOICE_CAMPAIGN_NAME!
   );
-  // console.log(campaign);
-  const r = await engageVoiceExtension.get(
-    `/voice/api/v1/admin/accounts/${account.accountId}/dialGroups/${dialGroup.dialGroupId}/campaigns/${campaign.campaignId}/lists`
-  );
-  console.log(r.data);
 
   // await engageVoiceExtension.post(
   //   `/voice/api/v1/admin/accounts/${account.accountId}/campaigns/${campaign.campaignId}/leadLoader/direct`,
@@ -73,6 +68,20 @@ const findCampaignByName = async (
   //     })),
   //   }
   // );
+
+  let r = await engageVoiceExtension.get(
+    `/voice/api/v1/admin/accounts/${account.accountId}/dialGroups/${dialGroup.dialGroupId}/campaigns/${campaign.campaignId}/lists`
+  );
+  const list = r.data.filter(
+    (l: any) => l.listDesc === process.env.ENGAGE_VOICE_LIST_DESCRIPTION
+  )[0];
+  if (list) {
+    r = await engageVoiceExtension.post(
+      `/voice/api/v1/admin/accounts/${account.accountId}/campaignLeads/leadSearch`,
+      {listId: list.listId}
+    );
+    console.log(r.data);
+  }
 
   await rc.revoke();
 })();
